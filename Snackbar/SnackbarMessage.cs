@@ -46,22 +46,20 @@ namespace Snackbar
             }
         }
 
-        internal Task DismissTask => taskCompletionSource.Task;
+        internal Task Task => taskCompletionSource.Task;
 
         internal void CompleteTask(SnackbarMessageState state)
         {
-            if (DismissTask.IsCompleted)
-            {
-                return;
-            }
-
             if (state == SnackbarMessageState.ActionPerformed && !CloseOnAction)
             {
                 return;
             }
 
             State = state;
-            taskCompletionSource.SetResult(state);
+            if (!Task.IsCompleted)
+            {
+                taskCompletionSource.SetResult(state);
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

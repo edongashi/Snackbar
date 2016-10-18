@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -13,6 +14,7 @@ namespace Snackbar
         private readonly object syncRoot;
         private readonly Queue<SnackbarMessage> messages;
         private readonly HashSet<Snackbar> snackbars;
+        private readonly HashSet<object> freezeTokens;
         private readonly RelayCommand actionCommand;
         private readonly ManualResetEventSlim unFrozenEvent;
 
@@ -25,6 +27,7 @@ namespace Snackbar
         {
             syncRoot = new object();
             messages = new Queue<SnackbarMessage>();
+            freezeTokens = new HashSet<object>();
             snackbars = new HashSet<Snackbar>();
             actionCommand = new RelayCommand(ActionClick);
             unFrozenEvent = new ManualResetEventSlim(true);
@@ -39,8 +42,13 @@ namespace Snackbar
         public bool IsFrozen
         {
             get { return isFrozen; }
-            set
+            private set
             {
+                if (value == isFrozen)
+                {
+                    return;
+                }
+
                 if (IsDisposed)
                 {
                     throw new ObjectDisposedException(GetType().FullName);
@@ -93,6 +101,8 @@ namespace Snackbar
                         snackbar.ActionLabel = actionLabel;
                     });
                 }
+
+                OnPropertyChanged(nameof(CurrentMessage));
             }
         }
 
@@ -116,6 +126,7 @@ namespace Snackbar
 
         public void DetachSnackbar(Snackbar snackbar)
         {
+            freezeTokens.Remove(snackbar);
             snackbars.Remove(snackbar);
         }
 
@@ -152,6 +163,21 @@ namespace Snackbar
         public List<SnackbarMessage> GetMessagesInQueue()
         {
             return messages.ToList();
+        }
+
+        public void AddFreezeToken(object token)
+        {
+            if (token != null)
+            {
+                freezeTokens.Add(token);
+                IsFrozen = true;
+            }
+        }
+
+        public void RemoveFreezeToken(object token)
+        {
+            freezeTokens.Remove(token);
+            IsFrozen = freezeTokens.Count != 0;
         }
 
         private void Post(SnackbarMessage message)
@@ -220,7 +246,7 @@ namespace Snackbar
                 MessageDequeued?.Invoke(this, args);
                 message.State = SnackbarMessageState.FadingIn;
                 IsOpen = true;
-                await Task.WhenAny(message.DismissTask, Task.Delay(Snackbar.FadeInDuration));
+                await Task.WhenAny(message.Task, Task.Delay(Snackbar.FadeInDuration));
                 if (IsDisposed)
                 {
                     CurrentMessage = null;
@@ -234,9 +260,15 @@ namespace Snackbar
                     bool waitAgain;
                     do
                     {
-                        await Task.WhenAny(message.DismissTask, Task.Delay(message.DisplayDuration));
+                        await Task.WhenAny(message.Task, Task.Delay(message.DisplayDuration));
+                        if (message.State != SnackbarMessageState.Visible)
+                        {
+                            break;
+                        }
+
                         waitAgain = IsFrozen;
                         unFrozenEvent.Wait();
+                        waitAgain = waitAgain || IsFrozen;
                     } while (waitAgain);
 
                     if (IsDisposed)
@@ -249,7 +281,7 @@ namespace Snackbar
                 message.State = SnackbarMessageState.FadingOut;
                 IsOpen = false;
                 await Task.Delay(Snackbar.FadeOutDuration);
-                message.State = SnackbarMessageState.Completed;
+                message.CompleteTask(SnackbarMessageState.Completed);
                 CurrentMessage = null;
                 MessageCompleted?.Invoke(this, args);
             }
@@ -268,6 +300,11 @@ namespace Snackbar
                 message.CompleteTask(SnackbarMessageState.ActionPerformed);
                 message.Action?.Invoke(parameter);
             }
+        }
+
+        ~SnackbarController()
+        {
+            Dispose();
         }
 
         public void Dispose()

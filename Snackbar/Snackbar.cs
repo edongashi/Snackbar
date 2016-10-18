@@ -56,6 +56,12 @@ namespace Snackbar
             typeof(Snackbar),
             new PropertyMetadata(false));
 
+        public static readonly DependencyProperty FreezesOnMouseOverProperty = DependencyProperty.Register(
+            nameof(FreezesOnMouseOver),
+            typeof(bool),
+            typeof(Snackbar),
+            new PropertyMetadata(true));
+
         public static readonly DependencyProperty ModeProperty = DependencyProperty.Register(
             nameof(Mode),
             typeof(SnackbarMode),
@@ -149,7 +155,16 @@ namespace Snackbar
         }
 
         /// <summary>
-        /// 
+        /// Gets or sets whether hovering above will prevent the message from closing in automatic mode.
+        /// </summary>
+        public bool FreezesOnMouseOver
+        {
+            get { return (bool)GetValue(FreezesOnMouseOverProperty); }
+            set { SetValue(FreezesOnMouseOverProperty, value); }
+        }
+
+        /// <summary>
+        /// Gets or sets the mode of the snackbar. Default is manual.
         /// </summary>
         public SnackbarMode Mode
         {
@@ -158,7 +173,7 @@ namespace Snackbar
         }
 
         /// <summary>
-        /// 
+        /// Gets or sets the controller of the snackbar when in automatic mode.
         /// </summary>
         public SnackbarController Controller
         {
@@ -172,8 +187,23 @@ namespace Snackbar
         {
             Controller = new SnackbarController();
             MouseRightButtonDown += OnMouseRightButtonDown;
+            MouseEnter += OnMouseEnter;
+            MouseLeave += OnMouseLeave;
             Loaded += SnackbarLoaded;
             Unloaded += SnackbarUnloaded;
+        }
+
+        private void OnMouseEnter(object sender, MouseEventArgs mouseEventArgs)
+        {
+            if (IsOpen && Mode == SnackbarMode.Automatic && FreezesOnMouseOver)
+            {
+                Controller?.AddFreezeToken(this);
+            }
+        }
+
+        private void OnMouseLeave(object sender, MouseEventArgs mouseEventArgs)
+        {
+            Controller?.RemoveFreezeToken(this);
         }
 
         private void SnackbarLoaded(object sender, RoutedEventArgs e)

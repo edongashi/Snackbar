@@ -49,12 +49,12 @@ namespace SnackbarDemo
 
         private void Window_Activated(object sender, EventArgs e)
         {
-            AutoSnackbar.Controller.IsFrozen = false;
+            AutoSnackbar.Controller.RemoveFreezeToken(this);
         }
 
         private void Window_Deactivated(object sender, EventArgs e)
         {
-            AutoSnackbar.Controller.IsFrozen = true;
+            AutoSnackbar.Controller.AddFreezeToken(this);
         }
     }
 }

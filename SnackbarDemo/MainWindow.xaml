@@ -61,7 +61,7 @@
                     <StackPanel Margin="16,32,16,0"
                                 VerticalAlignment="Top"
                                 TextElement.FontSize="16">
-                        <TextBlock Text="Automatic snackbar through queueing. Right click to dismiss current message. Deactivating the window freezes the snackbar controller."
+                        <TextBlock Text="Automatic snackbar through queueing. Right click to dismiss current message. Deactivating the window or hovering the snackbar freezes the snackbar controller."
                                    TextAlignment="Center"
                                    TextWrapping="Wrap" />
                         <TextBox x:Name="MessageTextBox"
@@ -76,7 +76,7 @@
                                 HorizontalAlignment="Center"
                                 Click="PostMessage_Click"
                                 Content="POST MESSAGE" />
-                        <CheckBox Content="IsFrozen" IsChecked="{Binding Controller.IsFrozen, ElementName=AutoSnackbar}" />
+                        <CheckBox Content="IsFrozen" IsChecked="{Binding Controller.IsFrozen, Mode=OneWay, ElementName=AutoSnackbar}" />
                         <TextBlock x:Name="AutoCountTextBlock"
                                    Text="Action clicked 0 times"
                                    TextAlignment="Center" />
