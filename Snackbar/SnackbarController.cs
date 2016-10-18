@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,7 +8,7 @@ using System.Windows.Input;
 
 namespace Snackbar
 {
-    public class SnackbarController : IDisposable
+    public class SnackbarController : INotifyPropertyChanged, IDisposable
     {
         private readonly object syncRoot;
         private bool isLooping;
@@ -54,6 +55,8 @@ namespace Snackbar
                 {
                     unFrozenEvent.Set();
                 }
+
+                OnPropertyChanged(nameof(IsFrozen));
             }
         }
 
@@ -69,6 +72,8 @@ namespace Snackbar
                 {
                     snackbar.Dispatcher.InvokeAsync(() => snackbar.IsOpen = value);
                 }
+
+                OnPropertyChanged(nameof(IsOpen));
             }
         }
 
@@ -278,6 +283,13 @@ namespace Snackbar
                 unFrozenEvent.Set();
                 IsDisposed = true;
             }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

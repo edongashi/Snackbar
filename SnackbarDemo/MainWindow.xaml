@@ -8,7 +8,9 @@
         Title="MainWindow"
         Width="525"
         Height="525"
+        Activated="Window_Activated"
         Background="{DynamicResource MaterialDesignPaper}"
+        Deactivated="Window_Deactivated"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         mc:Ignorable="d">
     <Window.Resources>
@@ -60,7 +62,7 @@
                     <StackPanel Margin="16,32,16,0"
                                 VerticalAlignment="Top"
                                 TextElement.FontSize="16">
-                        <TextBlock Text="Automatic snackbar through queueing. Right click to dismiss current message."
+                        <TextBlock Text="Automatic snackbar through queueing. Right click to dismiss current message. Deactivating the window freezes the snackbar controller."
                                    TextAlignment="Center"
                                    TextWrapping="Wrap" />
                         <TextBox x:Name="MessageTextBox"
@@ -75,9 +77,7 @@
                                 HorizontalAlignment="Center"
                                 Click="PostMessage_Click"
                                 Content="POST MESSAGE" />
-                        <CheckBox Checked="IsFrozenCheckbox_CheckedChanged"
-                                  Content="IsFrozen"
-                                  Unchecked="IsFrozenCheckbox_CheckedChanged" />
+                        <CheckBox Content="IsFrozen" IsChecked="{Binding Controller.IsFrozen, ElementName=AutoSnackbar}" />
                         <TextBlock x:Name="AutoCountTextBlock"
                                    Text="Action clicked 0 times"
                                    TextAlignment="Center" />

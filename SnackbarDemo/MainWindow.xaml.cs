@@ -1,19 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using Snackbar;
 
 namespace SnackbarDemo
@@ -60,9 +47,14 @@ namespace SnackbarDemo
             return value == string.Empty ? null : value;
         }
 
-        private void IsFrozenCheckbox_CheckedChanged(object sender, RoutedEventArgs e)
+        private void Window_Activated(object sender, EventArgs e)
         {
-            AutoSnackbar.Controller.IsFrozen = ((CheckBox)sender).IsChecked == true;
+            AutoSnackbar.Controller.IsFrozen = false;
+        }
+
+        private void Window_Deactivated(object sender, EventArgs e)
+        {
+            AutoSnackbar.Controller.IsFrozen = true;
         }
     }
 }
