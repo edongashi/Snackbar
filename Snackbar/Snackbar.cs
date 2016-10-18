@@ -48,7 +48,7 @@ namespace Snackbar
             nameof(IsOpen),
             typeof(bool),
             typeof(Snackbar),
-            new PropertyMetadata(false));
+            new PropertyMetadata(false, IsOpenChangedCallback));
 
         public static readonly DependencyProperty ClosesOnRightClickProperty = DependencyProperty.Register(
             nameof(ClosesOnRightClick),
@@ -73,6 +73,15 @@ namespace Snackbar
             typeof(SnackbarController),
             typeof(Snackbar),
             new PropertyMetadata(null, ControllerChangedCallback));
+
+        private static void IsOpenChangedCallback(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if ((bool)e.NewValue == false)
+            {
+                var snackbar = (Snackbar)d;
+                snackbar.Controller?.RemoveFreezeToken(snackbar);
+            }
+        }
 
         private static void ModeChangedCallback(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
         {
