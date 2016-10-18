@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
@@ -14,6 +15,9 @@ namespace Snackbar
         private readonly HashSet<Snackbar> snackbars;
         private SnackbarMessage currentMessage;
         private bool isOpen;
+
+        private bool isFrozen;
+        private readonly ManualResetEventSlim unFrozenEvent = new ManualResetEventSlim(true);
 
         public SnackbarController()
         {
@@ -30,6 +34,28 @@ namespace Snackbar
         public event EventHandler<SnackbarMessageEventArgs> MessageCompleted;
 
         public ICommand ActionCommand { get; }
+
+        public bool IsFrozen
+        {
+            get { return isFrozen; }
+            set
+            {
+                if (IsDisposed)
+                {
+                    throw new ObjectDisposedException(GetType().FullName);
+                }
+
+                isFrozen = value;
+                if (value)
+                {
+                    unFrozenEvent.Reset();
+                }
+                else
+                {
+                    unFrozenEvent.Set();
+                }
+            }
+        }
 
         public bool IsDisposed { get; private set; }
 
@@ -166,6 +192,12 @@ namespace Snackbar
         {
             while (!IsDisposed)
             {
+                unFrozenEvent.Wait();
+                if (IsDisposed)
+                {
+                    return;
+                }
+
                 SnackbarMessage message;
                 lock (syncRoot)
                 {
@@ -194,7 +226,14 @@ namespace Snackbar
                 if (state == SnackbarMessageState.FadingIn)
                 {
                     message.State = SnackbarMessageState.Visible;
-                    await Task.WhenAny(message.DismissTask, Task.Delay(message.DisplayDuration));
+                    bool waitAgain;
+                    do
+                    {
+                        await Task.WhenAny(message.DismissTask, Task.Delay(message.DisplayDuration));
+                        waitAgain = IsFrozen;
+                        unFrozenEvent.Wait();
+                    } while (waitAgain);
+
                     if (IsDisposed)
                     {
                         CurrentMessage = null;
@@ -236,6 +275,7 @@ namespace Snackbar
                 }
 
                 CurrentMessage?.CompleteTask(SnackbarMessageState.Removed);
+                unFrozenEvent.Set();
                 IsDisposed = true;
             }
         }

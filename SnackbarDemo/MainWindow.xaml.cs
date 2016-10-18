@@ -59,5 +59,10 @@ namespace SnackbarDemo
         {
             return value == string.Empty ? null : value;
         }
+
+        private void IsFrozenCheckbox_CheckedChanged(object sender, RoutedEventArgs e)
+        {
+            AutoSnackbar.Controller.IsFrozen = ((CheckBox)sender).IsChecked == true;
+        }
     }
 }

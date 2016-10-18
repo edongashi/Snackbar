@@ -75,6 +75,9 @@
                                 HorizontalAlignment="Center"
                                 Click="PostMessage_Click"
                                 Content="POST MESSAGE" />
+                        <CheckBox Checked="IsFrozenCheckbox_CheckedChanged"
+                                  Content="IsFrozen"
+                                  Unchecked="IsFrozenCheckbox_CheckedChanged" />
                         <TextBlock x:Name="AutoCountTextBlock"
                                    Text="Action clicked 0 times"
                                    TextAlignment="Center" />

@@ -191,7 +191,7 @@ namespace Snackbar
 
         private void OnMouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (!ClosesOnRightClick)
+            if (!ClosesOnRightClick || e.Handled)
             {
                 return;
             }
