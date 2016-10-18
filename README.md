@@ -23,4 +23,4 @@ snackbar.Controller.Post(message, actionLabel, actionCallback); // +overloads
 
 ###Additional Properties
 * ClosesOnRightClick - dismisses snackbar by right clicking. Works in both manual and automatic mode.
-* Controller.IsFrozen - pauses controller in automatic mode. Useful to defer notifications until window conditions are met.
+* FreezesOnMouseOver - pauses controller in automatic mode when hovering over the snackbar.
