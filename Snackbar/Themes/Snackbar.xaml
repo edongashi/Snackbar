@@ -9,7 +9,7 @@
         <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.TextBlock.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
-    <Style x:Key="MaterialDesignSnackbar" TargetType="{x:Type snackbar:Snackbar}">
+    <Style TargetType="{x:Type snackbar:Snackbar}">
         <Style.Resources>
             <converters:MathMultipleConverter x:Key="MathMlpMultipleConverter" Operation="Multiply" />
             <converters:NullableToVisibilityConverter x:Key="NullableToVisibilityConverter" />

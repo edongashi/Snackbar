@@ -48,8 +48,7 @@
                                    ActionLabel="HELLO"
                                    ClosesOnRightClick="True"
                                    Content="Hello world"
-                                   IsOpen="True"
-                                   Style="{StaticResource MaterialDesignSnackbar}" />
+                                   IsOpen="True" />
             </Grid>
         </TabItem>
         <TabItem Header="Automatic Snackbar">
@@ -105,8 +104,7 @@
                 </Grid>
                 <snackbar:Snackbar x:Name="AutoSnackbar"
                                    ClosesOnRightClick="True"
-                                   Mode="Automatic"
-                                   Style="{StaticResource MaterialDesignSnackbar}" />
+                                   Mode="Automatic" />
             </Grid>
         </TabItem>
     </TabControl>
