@@ -162,8 +162,8 @@ namespace Snackbar
         /// </summary>
         public SnackbarController Controller
         {
-            get { return (SnackbarController)GetValue(ActionCommandParameterProperty); }
-            set { SetValue(ActionCommandParameterProperty, value); }
+            get { return (SnackbarController)GetValue(ControllerProperty); }
+            set { SetValue(ControllerProperty, value); }
         }
 
         private Button actionButton;
