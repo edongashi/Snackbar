@@ -1,14 +1,11 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 
 namespace Snackbar
 {
     public class SnackbarMessage : INotifyPropertyChanged
     {
         public const int DefaultMessageDuration = 3000;
-        private readonly TaskCompletionSource<SnackbarMessageState> taskCompletionSource;
         private SnackbarMessageState state;
 
         public SnackbarMessage(
@@ -23,7 +20,6 @@ namespace Snackbar
             Action = action;
             CloseOnAction = closeOnAction;
             DisplayDuration = displayDuration <= 0 ? DefaultMessageDuration : displayDuration;
-            taskCompletionSource = new TaskCompletionSource<SnackbarMessageState>();
         }
 
         public object Content { get; }
@@ -43,22 +39,6 @@ namespace Snackbar
             {
                 state = value;
                 OnPropertyChanged(nameof(State));
-            }
-        }
-
-        internal Task Task => taskCompletionSource.Task;
-
-        internal void CompleteTask(SnackbarMessageState state)
-        {
-            if (state == SnackbarMessageState.ActionPerformed && !CloseOnAction)
-            {
-                return;
-            }
-
-            State = state;
-            if (!Task.IsCompleted)
-            {
-                taskCompletionSource.SetResult(state);
             }
         }
 

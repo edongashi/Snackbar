@@ -16,6 +16,8 @@ namespace Snackbar
         private readonly HashSet<Snackbar> snackbars;
         private readonly HashSet<object> freezeTokens;
         private readonly RelayCommand actionCommand;
+        private readonly ManualResetEventSlim messageActionEvent;
+        private readonly ManualResetEventSlim frozenChangedEvent;
         private readonly ManualResetEventSlim unFrozenEvent;
 
         private bool isOpen;
@@ -30,6 +32,8 @@ namespace Snackbar
             freezeTokens = new HashSet<object>();
             snackbars = new HashSet<Snackbar>();
             actionCommand = new RelayCommand(ActionClick);
+            messageActionEvent = new ManualResetEventSlim(false);
+            frozenChangedEvent = new ManualResetEventSlim(false);
             unFrozenEvent = new ManualResetEventSlim(true);
         }
 
@@ -64,6 +68,7 @@ namespace Snackbar
                     unFrozenEvent.Set();
                 }
 
+                frozenChangedEvent.Set();
                 OnPropertyChanged(nameof(IsFrozen));
             }
         }
@@ -203,7 +208,12 @@ namespace Snackbar
 
         public void CloseCurrentMessage()
         {
-            CurrentMessage?.CompleteTask(SnackbarMessageState.Removed);
+            var message = CurrentMessage;
+            if (message != null && message.State != SnackbarMessageState.FadingOut)
+            {
+                message.State = SnackbarMessageState.Removed;
+                messageActionEvent.Set();
+            }
         }
 
         public void ClearQueue()
@@ -239,6 +249,8 @@ namespace Snackbar
                     }
 
                     message = messages.Dequeue();
+                    frozenChangedEvent.Reset();
+                    messageActionEvent.Reset();
                 }
 
                 CurrentMessage = message;
@@ -246,42 +258,53 @@ namespace Snackbar
                 MessageDequeued?.Invoke(this, args);
                 message.State = SnackbarMessageState.FadingIn;
                 IsOpen = true;
-                await Task.WhenAny(message.Task, Task.Delay(Snackbar.FadeInDuration));
+                WaitHandle.WaitAny(new[]{
+                    messageActionEvent.WaitHandle
+                }, Snackbar.FadeInDuration);
+
                 if (IsDisposed)
                 {
                     CurrentMessage = null;
                     return;
                 }
 
-                var state = message.State;
-                if (state == SnackbarMessageState.FadingIn)
+                if (message.State == SnackbarMessageState.FadingIn)
                 {
                     message.State = SnackbarMessageState.Visible;
-                    bool waitAgain;
-                    do
+                    while (true)
                     {
-                        await Task.WhenAny(message.Task, Task.Delay(message.DisplayDuration));
-                        if (message.State != SnackbarMessageState.Visible)
+                        var eventSource = WaitHandle.WaitAny(new[]
+                        {
+                            frozenChangedEvent.WaitHandle,
+                            messageActionEvent.WaitHandle
+                        }, message.DisplayDuration);
+
+                        if (IsDisposed)
+                        {
+                            CurrentMessage = null;
+                            return;
+                        }
+
+                        if (message.State == SnackbarMessageState.Removed ||
+                            message.State == SnackbarMessageState.ActionPerformed && message.CloseOnAction)
                         {
                             break;
                         }
 
-                        waitAgain = IsFrozen;
-                        unFrozenEvent.Wait();
-                        waitAgain = waitAgain || IsFrozen;
-                    } while (waitAgain);
+                        if (eventSource == 0 || IsFrozen)
+                        {
+                            frozenChangedEvent.Reset();
+                            continue;
+                        }
 
-                    if (IsDisposed)
-                    {
-                        CurrentMessage = null;
-                        return;
+                        break;
                     }
                 }
 
                 message.State = SnackbarMessageState.FadingOut;
                 IsOpen = false;
                 await Task.Delay(Snackbar.FadeOutDuration);
-                message.CompleteTask(SnackbarMessageState.Completed);
+                message.State = SnackbarMessageState.Completed;
                 CurrentMessage = null;
                 MessageCompleted?.Invoke(this, args);
             }
@@ -292,12 +315,17 @@ namespace Snackbar
             lock (syncRoot)
             {
                 var message = CurrentMessage;
-                if (message.State != SnackbarMessageState.Visible)
+                if (message == null || message.State != SnackbarMessageState.Visible)
                 {
                     return;
                 }
 
-                message.CompleteTask(SnackbarMessageState.ActionPerformed);
+                message.State = SnackbarMessageState.ActionPerformed;
+                if (message.CloseOnAction)
+                {
+                    messageActionEvent.Set();
+                }
+
                 message.Action?.Invoke(parameter);
             }
         }
@@ -316,8 +344,15 @@ namespace Snackbar
                     messages.Clear();
                 }
 
-                CurrentMessage?.CompleteTask(SnackbarMessageState.Removed);
+                var message = CurrentMessage;
+                if (message != null)
+                {
+                    message.State = SnackbarMessageState.Removed;
+                }
+
+                messageActionEvent.Set();
                 unFrozenEvent.Set();
+                frozenChangedEvent.Set();
                 IsDisposed = true;
             }
         }
