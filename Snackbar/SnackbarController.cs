@@ -11,21 +11,23 @@ namespace Snackbar
     public class SnackbarController : INotifyPropertyChanged, IDisposable
     {
         private readonly object syncRoot;
-        private bool isLooping;
         private readonly Queue<SnackbarMessage> messages;
         private readonly HashSet<Snackbar> snackbars;
-        private SnackbarMessage currentMessage;
-        private bool isOpen;
+        private readonly RelayCommand actionCommand;
+        private readonly ManualResetEventSlim unFrozenEvent;
 
+        private bool isOpen;
+        private bool isLooping;
         private bool isFrozen;
-        private readonly ManualResetEventSlim unFrozenEvent = new ManualResetEventSlim(true);
+        private SnackbarMessage currentMessage;
 
         public SnackbarController()
         {
             syncRoot = new object();
             messages = new Queue<SnackbarMessage>();
             snackbars = new HashSet<Snackbar>();
-            ActionCommand = new RelayCommand(ActionClick);
+            actionCommand = new RelayCommand(ActionClick);
+            unFrozenEvent = new ManualResetEventSlim(true);
         }
 
         public event EventHandler<SnackbarMessageEventArgs> MessageEnqueued;
@@ -33,8 +35,6 @@ namespace Snackbar
         public event EventHandler<SnackbarMessageEventArgs> MessageDequeued;
 
         public event EventHandler<SnackbarMessageEventArgs> MessageCompleted;
-
-        public ICommand ActionCommand { get; }
 
         public bool IsFrozen
         {
@@ -109,7 +109,7 @@ namespace Snackbar
             {
                 snackbar.Content = message?.Content;
                 snackbar.ActionLabel = message?.ActionLabel;
-                snackbar.ActionCommand = ActionCommand;
+                snackbar.ActionCommand = actionCommand;
                 snackbar.IsOpen = IsOpen;
             });
         }
