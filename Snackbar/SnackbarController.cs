@@ -20,6 +20,7 @@ namespace Snackbar
         private readonly ManualResetEventSlim frozenChangedEvent;
         private readonly ManualResetEventSlim unFrozenEvent;
 
+        private int delayAfterActionClose;
         private bool isOpen;
         private bool isLooping;
         private bool isFrozen;
@@ -27,6 +28,7 @@ namespace Snackbar
 
         public SnackbarController()
         {
+            delayAfterActionClose = 200;
             syncRoot = new object();
             messages = new Queue<SnackbarMessage>();
             freezeTokens = new HashSet<object>();
@@ -87,6 +89,21 @@ namespace Snackbar
                 }
 
                 OnPropertyChanged(nameof(IsOpen));
+            }
+        }
+
+        public int DelayAfterActionClose
+        {
+            get { return delayAfterActionClose; }
+            set
+            {
+                if (value < 0)
+                {
+                    return;
+                }
+
+                delayAfterActionClose = value;
+                OnPropertyChanged(nameof(DelayAfterActionClose));
             }
         }
 
@@ -285,9 +302,14 @@ namespace Snackbar
                             return;
                         }
 
-                        if (message.State == SnackbarMessageState.Removed ||
-                            message.State == SnackbarMessageState.ActionPerformed && message.CloseOnAction)
+                        if (message.State == SnackbarMessageState.Removed)
                         {
+                            break;
+                        }
+
+                        if (message.State == SnackbarMessageState.ActionPerformed && message.CloseOnAction)
+                        {
+                            await Task.Delay(DelayAfterActionClose);
                             break;
                         }
 
