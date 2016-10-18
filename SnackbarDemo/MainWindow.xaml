@@ -1,0 +1,110 @@
+﻿<Window x:Class="SnackbarDemo.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:snackbar="clr-namespace:Snackbar;assembly=Snackbar"
+        Title="MainWindow"
+        Width="525"
+        Height="525"
+        Background="{DynamicResource MaterialDesignPaper}"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        mc:Ignorable="d">
+    <Window.Resources>
+        <ResourceDictionary Source="pack://application:,,,/Snackbar;component/Themes/Snackbar.xaml" />
+    </Window.Resources>
+    <TabControl BorderThickness="0" Padding="0">
+        <TabItem Header="Manual Snackbar">
+            <Grid>
+                <StackPanel Margin="16,32"
+                            VerticalAlignment="Top"
+                            TextElement.FontSize="16">
+                    <TextBlock Text="Snackbar through IsOpen, Content, ActionLabel"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap" />
+                    <TextBox Margin="8"
+                             materialDesign:HintAssist.Hint="Content"
+                             Text="{Binding Content,
+                                            ElementName=Snackbar,
+                                            UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBox Margin="8"
+                             materialDesign:HintAssist.Hint="ActionLabel"
+                             Text="{Binding ActionLabel,
+                                            ElementName=Snackbar,
+                                            UpdateSourceTrigger=PropertyChanged}" />
+                    <CheckBox Margin="8"
+                              Content="IsOpen"
+                              IsChecked="{Binding IsOpen,
+                                                  ElementName=Snackbar}" />
+                    <TextBlock x:Name="CountTextBlock"
+                               Text="Action clicked 0 times"
+                               TextAlignment="Center" />
+                </StackPanel>
+                <snackbar:Snackbar x:Name="Snackbar"
+                                   ActionClick="Snackbar_ActionClick"
+                                   ActionLabel="HELLO"
+                                   ClosesOnRightClick="True"
+                                   Content="Hello world"
+                                   IsOpen="True"
+                                   Style="{StaticResource MaterialDesignSnackbar}" />
+            </Grid>
+        </TabItem>
+        <TabItem Header="Automatic Snackbar">
+            <Grid>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Margin="16,32,16,0"
+                                VerticalAlignment="Top"
+                                TextElement.FontSize="16">
+                        <TextBlock Text="Automatic snackbar through queueing. Right click to dismiss current message."
+                                   TextAlignment="Center"
+                                   TextWrapping="Wrap" />
+                        <TextBox x:Name="MessageTextBox"
+                                 Margin="8"
+                                 materialDesign:HintAssist.Hint="Message"
+                                 Text="Hello World!" />
+                        <TextBox x:Name="ActionTextBox"
+                                 Margin="8"
+                                 materialDesign:HintAssist.Hint="Action"
+                                 Text="HELLO" />
+                        <Button Margin="8"
+                                HorizontalAlignment="Center"
+                                Click="PostMessage_Click"
+                                Content="POST MESSAGE" />
+                        <TextBlock x:Name="AutoCountTextBlock"
+                                   Text="Action clicked 0 times"
+                                   TextAlignment="Center" />
+                    </StackPanel>
+                    <DataGrid x:Name="MessageQueueDataGrid"
+                              Grid.Row="1"
+                              AutoGenerateColumns="False"
+                              ColumnWidth="*">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Binding="{Binding Content,
+                                                                  Mode=OneWay}"
+                                                CanUserSort="False"
+                                                Header="Content" />
+                            <DataGridTextColumn Binding="{Binding ActionLabel,
+                                                                  Mode=OneWay}"
+                                                CanUserSort="False"
+                                                Header="Action Label"
+                                                Visibility="{Binding ActionLabel}" />
+                            <DataGridTextColumn Binding="{Binding State,
+                                                                  Mode=OneWay}"
+                                                CanUserSort="False"
+                                                Header="State" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+                <snackbar:Snackbar x:Name="AutoSnackbar"
+                                   ClosesOnRightClick="True"
+                                   Mode="Automatic"
+                                   Style="{StaticResource MaterialDesignSnackbar}" />
+            </Grid>
+        </TabItem>
+    </TabControl>
+</Window>
