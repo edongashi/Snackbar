@@ -2,10 +2,8 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Input;
 
 namespace Snackbar
 {
@@ -135,21 +133,34 @@ namespace Snackbar
                 return;
             }
 
-            snackbars.Add(snackbar);
-            var message = CurrentMessage;
-            snackbar.Dispatcher.InvokeAsync(() =>
+            lock (syncRoot)
             {
-                snackbar.Content = message?.Content;
-                snackbar.ActionLabel = message?.ActionLabel;
-                snackbar.ActionCommand = actionCommand;
-                snackbar.IsOpen = IsOpen;
-            });
+                snackbars.Add(snackbar);
+                var message = CurrentMessage;
+                snackbar.Dispatcher.InvokeAsync(() =>
+                {
+                    snackbar.Content = message?.Content;
+                    snackbar.ActionLabel = message?.ActionLabel;
+                    snackbar.ActionCommand = actionCommand;
+                    snackbar.IsOpen = IsOpen;
+                });
+
+                if (!isLooping)
+                {
+                    isLooping = true;
+                    Task.Run(Pump);
+                }
+            }
         }
 
         public void DetachSnackbar(Snackbar snackbar)
         {
-            freezeTokens.Remove(snackbar);
-            snackbars.Remove(snackbar);
+            lock (syncRoot)
+            {
+                snackbar.ActionCommand = null;
+                freezeTokens.Remove(snackbar);
+                snackbars.Remove(snackbar);
+            }
         }
 
         public void Post(object content)
@@ -259,7 +270,7 @@ namespace Snackbar
                 SnackbarMessage message;
                 lock (syncRoot)
                 {
-                    if (messages.Count == 0)
+                    if (snackbars.Count == 0 || messages.Count == 0)
                     {
                         isLooping = false;
                         return;
@@ -275,9 +286,7 @@ namespace Snackbar
                 MessageDequeued?.Invoke(this, args);
                 message.State = SnackbarMessageState.FadingIn;
                 IsOpen = true;
-                WaitHandle.WaitAny(new[]{
-                    messageActionEvent.WaitHandle
-                }, Snackbar.FadeInDuration);
+                messageActionEvent.Wait(Snackbar.FadeInDuration);
 
                 if (IsDisposed)
                 {
@@ -354,11 +363,17 @@ namespace Snackbar
 
         ~SnackbarController()
         {
-            Dispose();
+            Dispose(false);
         }
 
         public void Dispose()
         {
+            Dispose(true);
+        }
+
+        private void Dispose(bool disposing)
+        {
+
             if (!IsDisposed)
             {
                 lock (syncRoot)
@@ -375,6 +390,13 @@ namespace Snackbar
                 messageActionEvent.Set();
                 unFrozenEvent.Set();
                 frozenChangedEvent.Set();
+                if (disposing)
+                {
+                    messageActionEvent.Dispose();
+                    unFrozenEvent.Dispose();
+                    frozenChangedEvent.Dispose();
+                }
+
                 IsDisposed = true;
             }
         }

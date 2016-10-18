@@ -54,7 +54,7 @@ namespace Snackbar
             nameof(ClosesOnRightClick),
             typeof(bool),
             typeof(Snackbar),
-            new PropertyMetadata(false));
+            new PropertyMetadata(true));
 
         public static readonly DependencyProperty FreezesOnMouseOverProperty = DependencyProperty.Register(
             nameof(FreezesOnMouseOver),

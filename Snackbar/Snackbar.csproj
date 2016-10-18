@@ -65,6 +65,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="SnackbarMode.cs" />
+    <Compile Include="SnackbarModeToBoolConverter.cs" />
     <Page Include="Themes\Snackbar.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

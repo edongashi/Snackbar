@@ -46,7 +46,6 @@
                 <snackbar:Snackbar x:Name="Snackbar"
                                    ActionClick="Snackbar_ActionClick"
                                    ActionLabel="HELLO"
-                                   ClosesOnRightClick="True"
                                    Content="Hello world"
                                    IsOpen="True" />
             </Grid>
@@ -76,7 +75,12 @@
                                 HorizontalAlignment="Center"
                                 Click="PostMessage_Click"
                                 Content="POST MESSAGE" />
-                        <CheckBox Content="IsFrozen" IsChecked="{Binding Controller.IsFrozen, Mode=OneWay, ElementName=AutoSnackbar}" />
+                        <CheckBox Content="Automatic" IsChecked="{Binding Mode, ElementName=AutoSnackbar, Converter={StaticResource SnackbarModeToBoolConverter}}" />
+                        <CheckBox Content="IsFrozen"
+                                  IsChecked="{Binding Controller.IsFrozen,
+                                                      Mode=OneWay,
+                                                      ElementName=AutoSnackbar}"
+                                  IsEnabled="False" />
                         <TextBlock x:Name="AutoCountTextBlock"
                                    Text="Action clicked 0 times"
                                    TextAlignment="Center" />
@@ -102,9 +106,7 @@
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
-                <snackbar:Snackbar x:Name="AutoSnackbar"
-                                   ClosesOnRightClick="True"
-                                   Mode="Automatic" />
+                <snackbar:Snackbar x:Name="AutoSnackbar" Mode="Automatic" />
             </Grid>
         </TabItem>
     </TabControl>
