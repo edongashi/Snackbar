@@ -1,6 +1,8 @@
 #Snackbar
 
-WPF Snackbar that supports manual and automatic mode.
+A quick WPF Snackbar implementation until the real thing comes along.
+
+The snackbar supports manual and automatic mode. It's recommended to post only strings to the automatic controller as complex cases may not be considered yet.
 
 ###Manual Mode
 
